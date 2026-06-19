@@ -21,25 +21,25 @@ export function ControlButton({
   ...props
 }: ControlButtonProps) {
   const variantClasses = {
-    start: "bg-[#e8f7ec] border border-[#a7f3d0] text-[#065f46] hover:bg-[#d1fae5] hover:border-[#34d399] active:scale-[0.98] shadow-sm",
-    end: "bg-[#fef2f2] border border-[#fecaca] text-[#991b1b] hover:bg-[#fee2e2] hover:border-[#fca5a5] active:scale-[0.98] shadow-sm",
-    filter: "bg-white border border-neutral-200 text-neutral-800 hover:bg-neutral-50 hover:border-neutral-300 active:scale-[0.98] shadow-sm"
+    start: "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 hover:border-emerald-400 hover:shadow-glowGreen shadow-[0_0_15px_rgba(159,248,77,0.05)]",
+    end: "bg-rose-500/10 border border-rose-500/30 text-rose-300 hover:bg-rose-500/20 hover:border-rose-400 hover:shadow-glowPink shadow-[0_0_15px_rgba(255,0,127,0.05)]",
+    filter: "bg-white/[0.03] border border-white/10 text-white/80 hover:bg-white/[0.08] hover:border-white/20 hover:text-white"
   };
 
   return (
     <button
       type="button"
       className={cn(
-        "flex flex-col items-center justify-center w-full h-24 md:h-28 rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/5 disabled:opacity-40 disabled:pointer-events-none select-none",
+        "flex flex-col items-center justify-center w-full h-24 md:h-28 rounded-2xl transition-all duration-300 focus:outline-none disabled:opacity-30 disabled:pointer-events-none select-none hover:-translate-y-0.5",
         variantClasses[variant],
         className
       )}
       {...props}
     >
-      {icon && <div className="mb-1.5 shrink-0 transition-transform duration-200 group-hover:scale-105">{icon}</div>}
-      <span className="text-xs md:text-sm font-black tracking-wide uppercase">{label}</span>
+      {icon && <div className="mb-1.5 shrink-0 transition-transform duration-300 group-hover:scale-105">{icon}</div>}
+      <span className="text-xs md:text-sm font-black tracking-wider uppercase">{label}</span>
       {sublabel && (
-        <span className="text-[10px] lowercase font-medium text-neutral-400 mt-0.5 truncate max-w-full px-1.5">
+        <span className="text-[10px] lowercase font-medium text-white/40 mt-0.5 truncate max-w-full px-1.5">
           {sublabel}
         </span>
       )}

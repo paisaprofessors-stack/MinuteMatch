@@ -76,9 +76,17 @@ export function MinuteMatchLiveScreen() {
   const audioIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const matchRef = useRef<MatchFoundPayload | null>(null);
 
+  const chatViewportRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     matchRef.current = match;
   }, [match]);
+
+  useEffect(() => {
+    if (chatViewportRef.current) {
+      chatViewportRef.current.scrollTop = chatViewportRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   function cleanupPeerConnection() {
     if (pcRef.current) {
@@ -492,29 +500,8 @@ export function MinuteMatchLiveScreen() {
   const xpPercent = xp % 100;
 
   return (
-    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-black text-white font-sans select-none">
+    <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-black text-white font-sans select-none">
       
-      {/* Floating Gamified HUD overlay */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 bg-black/60 border border-white/10 px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-lg select-none">
-        {/* Streak indicator */}
-        <div className="flex items-center gap-1.5 text-xs font-black text-white" title="Daily Match Streak">
-          <span className="text-neonPink animate-pulse">🔥</span>
-          <span>{streak}d</span>
-        </div>
-        <div className="w-[1px] h-3 bg-white/20" />
-        {/* Level & XP progress bar */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase text-neonBlue">Lv. {level}</span>
-          <div className="relative w-16 h-2 bg-white/10 rounded-full overflow-hidden border border-white/5">
-            <div 
-              className="h-full bg-gradient-to-r from-neonBlue to-neonPink rounded-full transition-all duration-300"
-              style={{ width: `${xpPercent}%` }}
-            />
-          </div>
-          <span className="text-[9px] font-bold text-white/50">{xp} XP</span>
-        </div>
-      </div>
-
       {/* Floating Emojis Canvas Overlay */}
       <div className="absolute inset-0 pointer-events-none z-15 overflow-hidden">
         <AnimatePresence>
@@ -525,7 +512,7 @@ export function MinuteMatchLiveScreen() {
               animate={{ y: "10vh", opacity: [0, 1, 1, 0], scale: [0.6, 1.4, 1.4, 0.8] }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.8, ease: "easeOut" }}
-              className="absolute text-4xl"
+              className="absolute text-4xl font-normal"
               style={{ left: `${e.left}%` }}
             >
               {e.char}
@@ -536,76 +523,105 @@ export function MinuteMatchLiveScreen() {
 
       {/* Quick Emoji Reaction Dock */}
       {currentState === "inSession" && (
-        <div className="absolute bottom-20 md:bottom-4 right-4 z-20 flex gap-1.5 bg-black/45 border border-white/10 p-1.5 rounded-full backdrop-blur-md shadow-lg select-none">
+        <div className="absolute bottom-24 md:bottom-28 left-4 md:left-6 z-25 flex gap-1 bg-black/50 border border-white/10 p-1 rounded-full backdrop-blur-md shadow-lg select-none">
           {["🔥", "👋", "💯", "😂", "❤️", "👍"].map((emoji) => (
             <button
               key={emoji}
               onClick={() => sendEmojiReaction(emoji)}
-              className="w-9 h-9 flex items-center justify-center text-lg rounded-full hover:bg-white/15 hover:scale-110 active:scale-95 transition cursor-pointer"
+              className="w-8 h-8 flex items-center justify-center text-base rounded-full hover:bg-white/15 hover:scale-110 active:scale-95 transition cursor-pointer"
             >
               {emoji}
             </button>
           ))}
         </div>
       )}
-      
-      {/* 70vh TOP AREA (Video Stage) */}
-      <VideoStage
-        localPanel={
-          <LocalPreviewPanel
-            displayName={profile?.displayName}
-            gender={profile?.gender}
-            inSession={currentState === "inSession"}
-            stream={localStream}
-            volLevel={volLevel}
-          />
-        }
-        remotePanel={
-          <RemotePartnerPanel
-            currentState={currentState}
-            partner={partner ?? null}
-            sharedInterest={match?.sharedInterest}
-            icebreaker={icebreaker}
-            statusText={statusText}
-            stream={remoteStream}
-            onReportClick={() => setReportOpen(true)}
-            onBlockClick={() => setBlockOpen(true)}
-            onFindNext={startMatching}
-            onBack={() => {
-              setCurrentState("idle");
-              setMatch(null);
-              cleanupPeerConnection();
-            }}
-          />
-        }
-        timerBadge={
-          currentState === "inSession" ? <TimerBadge remaining={remaining} /> : null
-        }
-        swipeOverlay={
-          currentState === "timerEnded" && partner ? (
-            <SwipeResultOverlay
-              partnerName={partner.displayName}
-              sharedInterest={match?.sharedInterest ?? ""}
-              waitingSwipe={waitingSwipe}
-              swipeResult={swipeResult}
-              onSwipe={handleSwipe}
-              onKeepMatching={startMatching}
-              onOpenChat={(friendshipId) => router.push(`/chat/${friendshipId}`)}
-              onViewFriends={() => router.push("/friends")}
-              onBackToQueue={() => {
-                setCurrentState("idle");
-                setMatch(null);
-              }}
-            />
-          ) : null
-        }
-      />
 
-      {/* 30vh BOTTOM AREA (Controls Dock & Safety/Chat Deck) */}
-      <div className="relative flex flex-col md:flex-row h-[35vh] md:h-[30vh] w-full bg-[#f4f4f7] border-t border-black/[0.06] text-[#1c1c1e] overflow-y-auto md:overflow-hidden">
-        
-        {/* Left Column: 4 Large rounded Control Buttons */}
-        <div className="w-full md:w-1/2 h-full">
+      {/* LEFT SECTION: Video Stage and Controls */}
+      <div className="flex-1 flex flex-col h-[60vh] md:h-full border-r border-white/5 relative min-w-0 bg-[#06070a]">
+        {/* Left Section Header */}
+        <div className="px-6 py-3 border-b border-white/5 bg-white/[0.01] shrink-0 flex justify-between items-center h-12">
+          <div className="flex items-center gap-2 select-none">
+            <span className="text-sm font-black tracking-wide font-display">
+              Minute<span className="text-neonPink">Match</span> Live
+            </span>
+          </div>
+
+          {/* Gamified HUD in Header */}
+          <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 px-3 py-1 rounded-full shadow-inner select-none">
+            <div className="flex items-center gap-1 text-[11px] font-black text-white" title="Daily Match Streak">
+              <span className="text-neonPink animate-pulse">🔥</span>
+              <span>{streak}d</span>
+            </div>
+            <div className="w-[1px] h-3 bg-white/10" />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[9px] font-black uppercase text-neonBlue">Lv. {level}</span>
+              <div className="relative w-12 h-1.5 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                <div 
+                  className="h-full bg-gradient-to-r from-neonBlue to-neonPink rounded-full transition-all duration-300"
+                  style={{ width: `${xpPercent}%` }}
+                />
+              </div>
+              <span className="text-[9px] font-bold text-white/50">{xp} XP</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Video Stage Container */}
+        <div className="flex-1 min-h-0 relative p-4 pb-2">
+          <VideoStage
+            localPanel={
+              <LocalPreviewPanel
+                displayName={profile?.displayName}
+                gender={profile?.gender}
+                inSession={currentState === "inSession"}
+                stream={localStream}
+                volLevel={volLevel}
+              />
+            }
+            remotePanel={
+              <RemotePartnerPanel
+                currentState={currentState}
+                partner={partner ?? null}
+                sharedInterest={match?.sharedInterest}
+                icebreaker={icebreaker}
+                statusText={statusText}
+                stream={remoteStream}
+                onReportClick={() => setReportOpen(true)}
+                onBlockClick={() => setBlockOpen(true)}
+                onFindNext={startMatching}
+                onBack={() => {
+                  setCurrentState("idle");
+                  setMatch(null);
+                  cleanupPeerConnection();
+                }}
+              />
+            }
+            timerBadge={
+              currentState === "inSession" ? <TimerBadge remaining={remaining} /> : null
+            }
+            swipeOverlay={
+              currentState === "timerEnded" && partner ? (
+                <SwipeResultOverlay
+                  partnerName={partner.displayName}
+                  sharedInterest={match?.sharedInterest ?? ""}
+                  waitingSwipe={waitingSwipe}
+                  swipeResult={swipeResult}
+                  onSwipe={handleSwipe}
+                  onKeepMatching={startMatching}
+                  onOpenChat={(friendshipId) => router.push(`/chat/${friendshipId}`)}
+                  onViewFriends={() => router.push("/friends")}
+                  onBackToQueue={() => {
+                    setCurrentState("idle");
+                    setMatch(null);
+                  }}
+                />
+              ) : null
+            }
+          />
+        </div>
+
+        {/* Controls Dock */}
+        <div className="h-fit py-2 px-4 shrink-0 bg-transparent">
           <ControlDock
             onStart={startMatching}
             onEnd={endMatchingOrSession}
@@ -632,21 +648,68 @@ export function MinuteMatchLiveScreen() {
             activeIAmLabel={activeIAmLabel}
           />
         </div>
+      </div>
 
-        {/* Right Column: Safety rules and chat input */}
-        <div className="w-full md:w-1/2 p-4 flex flex-col justify-between gap-3 h-full bg-[#f4f4f7]">
-          <RulesCard onSafetyClick={() => setSafetyOpen(true)} />
-          
-          <div className="mt-auto pb-2 md:pb-0">
-            <ChatInput
-              value={chatBody}
-              onChange={setChatBody}
-              onSend={sendMessage}
-              isEnabled={currentState === "inSession"}
-            />
-          </div>
+      {/* RIGHT SECTION: Chat Message List Sidebar */}
+      <div className="w-full md:w-[350px] lg:w-[400px] h-[40vh] md:h-full bg-[#0a0b12]/60 backdrop-blur-md shrink-0 flex flex-col border-t md:border-t-0 md:border-l border-white/10 z-10">
+        {/* Chat Sidebar Header */}
+        <div className="px-4 py-3 border-b border-white/5 bg-white/[0.01] shrink-0 flex justify-between items-center">
+          <span className="text-xs font-black uppercase tracking-widest text-[#00f0ff]">Conversation Chat Logs</span>
+          {currentState === "inSession" && (
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          )}
         </div>
 
+        {/* Chat Messages Scrolling viewport */}
+        <div 
+          className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 min-h-0 select-text" 
+          ref={chatViewportRef}
+        >
+          {messages.length === 0 ? (
+            <div className="flex-grow flex flex-col items-center justify-center text-center p-4 opacity-50">
+              <p className="text-xs font-black text-white/30 uppercase tracking-widest">No Messages</p>
+              <p className="text-[10px] text-white/20 mt-1 max-w-[200px] leading-relaxed">
+                {currentState === "inSession" 
+                  ? "Vibe match is active! Say hi to start the conversation." 
+                  : "Active session logs will display here."}
+              </p>
+            </div>
+          ) : (
+            messages.map((msg) => {
+              const isSelf = msg.senderId === profile?.userId;
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex flex-col gap-1 ${isSelf ? "items-end" : "items-start"} w-full`}
+                >
+                  <span className="text-[8px] font-bold text-white/30 uppercase tracking-wider px-1">
+                    {msg.senderName}
+                  </span>
+                  <div
+                    className={`px-3.5 py-2 rounded-2xl text-xs font-medium break-words max-w-[85%] shadow-md border ${
+                      isSelf
+                        ? "bg-gradient-to-r from-neonBlue to-neonPink text-white border-none rounded-tr-none"
+                        : "bg-white/[0.04] text-white border-white/5 rounded-tl-none"
+                    }`}
+                  >
+                    {msg.body}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer Area: Rules & Chat input */}
+        <div className="p-4 border-t border-white/5 bg-white/[0.01] flex flex-col gap-3 shrink-0">
+          <RulesCard onSafetyClick={() => setSafetyOpen(true)} />
+          <ChatInput
+            value={chatBody}
+            onChange={setChatBody}
+            onSend={sendMessage}
+            isEnabled={currentState === "inSession"}
+          />
+        </div>
       </div>
 
       {/* Modals & Popups */}

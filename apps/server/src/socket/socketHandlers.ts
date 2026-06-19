@@ -125,11 +125,13 @@ function autoLeftUnanswered(io: Server, store: MemoryStore, sessionId: string): 
   }
 }
 
-function tryMatch(io: Server, store: MemoryStore, user: QueueUser): void {
+function tryMatch(io: Server, store: MemoryStore, user: QueueUser, isInitialJoin = false): void {
   const candidates = [...store.queue.values()].filter((candidate) => candidate.userId !== user.userId);
   const match = findBestMatch(user, candidates, store.blocks);
   if (!match) {
-    io.to(user.socketId).emit("server:queue:waiting", { queueSize: store.queue.size, message: "Searching for someone compatible..." });
+    if (isInitialJoin) {
+      io.to(user.socketId).emit("server:queue:waiting", { queueSize: store.queue.size, message: "Searching for someone compatible..." });
+    }
     return;
   }
 
@@ -158,6 +160,19 @@ function tryMatch(io: Server, store: MemoryStore, user: QueueUser): void {
 }
 
 export function registerSocketHandlers(io: Server, store: MemoryStore): void {
+  // Start background matchmaking loop to pair waiting users every 3 seconds
+  setInterval(() => {
+    try {
+      const queueUsers = Array.from(store.queue.values());
+      for (const user of queueUsers) {
+        if (!store.queue.has(user.userId)) continue;
+        tryMatch(io, store, user, false);
+      }
+    } catch (err) {
+      console.error("[matchmaking] Error in matchmaking loop:", err);
+    }
+  }, 3000);
+
   io.on("connection", (socket: Socket) => {
     console.info("[socket] connected", { socketId: socket.id });
     socket.on("client:profile:save", (input: ProfileSaveInput) => {
@@ -211,6 +226,16 @@ export function registerSocketHandlers(io: Server, store: MemoryStore): void {
         socket.emit("server:queue:waiting", { queueSize: store.queue.size, message: "You are already in the queue." });
         return;
       }
+      // Check if user is already in an active session
+      const hasActiveSession = Array.from(store.sessions.values()).some(
+        (session) =>
+          ["active", "waiting_for_users", "created"].includes(session.status) &&
+          [session.userAId, session.userBId].includes(saved.userId)
+      );
+      if (hasActiveSession) {
+        socket.emit("server:match:error", { message: "You are already in an active session." });
+        return;
+      }
       const queueUser = profileToQueueUser(saved, socket.id);
       store.users.set(saved.userId, saved);
       store.persistence?.upsertUser(saved);
@@ -227,7 +252,7 @@ export function registerSocketHandlers(io: Server, store: MemoryStore): void {
       store.persistence?.upsertPresence(presence);
       store.queue.set(saved.userId, queueUser);
       console.info("[queue] joined", { userId: saved.userId, mode: saved.mode, interests: saved.interests });
-      tryMatch(io, store, queueUser);
+      tryMatch(io, store, queueUser, true);
     });
 
     socket.on("client:queue:leave", ({ userId }: { userId: string }) => {
@@ -466,7 +491,7 @@ export function registerSocketHandlers(io: Server, store: MemoryStore): void {
       }
       emitPresenceToFriends(io, store, userId);
       for (const session of store.sessions.values()) {
-        if (session.status === "active" && [session.userAId, session.userBId].includes(userId)) {
+        if (["active", "waiting_for_users", "created"].includes(session.status) && [session.userAId, session.userBId].includes(userId)) {
           emitToUser(io, store, partnerId(session, userId), "server:session:ended", { reason: "Partner left" });
           endSession(io, store, session.id, "partner_left");
         }

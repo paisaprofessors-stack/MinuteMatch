@@ -1,8 +1,8 @@
 "use client";
- 
+
 import React, { useEffect, useRef } from "react";
-import { Mic, Volume2 } from "lucide-react";
- 
+import { CameraOff, Mic } from "lucide-react";
+
 interface LocalPreviewPanelProps {
   displayName?: string;
   gender?: string;
@@ -10,7 +10,7 @@ interface LocalPreviewPanelProps {
   stream: MediaStream | null;
   volLevel: number;
 }
- 
+
 export function LocalPreviewPanel({
   displayName = "Guest User",
   gender = "prefer not",
@@ -19,7 +19,7 @@ export function LocalPreviewPanel({
   volLevel
 }: LocalPreviewPanelProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
- 
+
   useEffect(() => {
     if (videoRef.current) {
       if (stream) {
@@ -32,68 +32,60 @@ export function LocalPreviewPanel({
       }
     }
   }, [stream]);
- 
+
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0b0c16] to-[#020205] border-r border-white/5">
-      {/* Analog noise scanline CSS overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.015),rgba(0,255,0,0.01),rgba(0,0,255,0.015))] bg-[length:100%_4px,4px_100%] opacity-60 z-0" />
-      
-      {/* Fine-grain noise canvas overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(#ffffff04_1px,transparent_0)] bg-[size:16px_16px] opacity-75 z-0" />
- 
-      {/* Local Video Stream Element */}
-      <div className="absolute inset-0 z-0 bg-transparent flex items-center justify-center">
-        <video
-          ref={videoRef}
-          id="localVideo"
-          autoPlay
-          playsInline
-          muted
-          className={`absolute inset-0 h-full w-full object-cover ${stream ? "" : "hidden"}`}
-        />
-        {/* Stream Overlay Status */}
-        <div
-          id="localVideoStatus"
-          className={`absolute top-4 left-4 bg-black/60 px-2.5 py-1 rounded-md text-[10px] uppercase font-bold text-white/50 tracking-wider ${
-            stream ? "" : "hidden"
-          }`}
-        >
-          Camera Connected
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden bg-slate-950/40 rounded-2xl border border-white/10 shadow-lg select-none">
+      {/* Scanline pattern overlay */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] opacity-40 z-10" />
+
+      {stream ? (
+        // Active stream view
+        <div className="absolute inset-0 z-0 bg-transparent flex items-center justify-center">
+          <video
+            ref={videoRef}
+            id="localVideo"
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+          />
+          
+          {/* Live indicator badge */}
+          <div className="absolute top-3 left-3 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full text-[8px] uppercase font-black text-emerald-300 tracking-wider shadow-sm z-20">
+            LIVE
+          </div>
+
+          {/* Micro vertical volume visualizer on the left */}
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex flex-col gap-0.5 bg-black/45 backdrop-blur-md p-1.5 rounded-full border border-white/5 z-20">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <span
+                key={i}
+                className="w-1.5 h-1.5 rounded-full transition-all duration-150"
+                style={{
+                  backgroundColor: i < Math.ceil(volLevel / 3) ? "#00f0ff" : "rgba(255, 255, 255, 0.15)",
+                  boxShadow: i < Math.ceil(volLevel / 3) ? "0 0 6px #00f0ff" : "none"
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Small glass user identity overlay */}
+          <div className="absolute bottom-3 left-3 right-3 bg-black/60 backdrop-blur-sm border border-white/5 px-2.5 py-1 rounded-lg text-[9px] uppercase font-bold text-white/90 tracking-wide z-20 truncate shadow-md text-center">
+            {displayName} ({gender})
+          </div>
         </div>
-      </div>
- 
-      {/* Main Branding Information */}
-      <div className="text-center z-10 p-6 max-w-sm">
-        <h1 className="text-3xl md:text-4xl font-black tracking-wider text-white select-none">
-          Minute<span className="accent-text">Match</span>
-        </h1>
-        <p className="mt-2 text-[10px] md:text-xs font-black tracking-widest uppercase text-white/40 select-none">
-          Meet someone new. One minute at a time.
-        </p>
-        <div className="mt-5 text-[10px] bg-white/[0.04] border border-white/5 rounded-full px-3.5 py-1.5 font-bold text-white/50 w-fit mx-auto shadow-sm select-none">
-          Local Preview: {displayName} ({gender})
+      ) : (
+        // Inactive camera placeholder state
+        <div className="flex flex-col items-center justify-center p-4 text-center z-10 gap-3">
+          <div className="h-12 w-12 rounded-full border border-white/10 flex items-center justify-center bg-white/[0.02] text-white/30 animate-pulse">
+            <CameraOff className="h-5 w-5" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-[10px] font-black uppercase tracking-wider text-white/50">{displayName}</p>
+            <p className="text-[8px] uppercase tracking-widest text-white/30">Camera Idle</p>
+          </div>
         </div>
-      </div>
- 
-      {/* Micro volume meter at bottom */}
-      <div className="absolute bottom-5 left-5 right-5 flex items-center gap-2.5 bg-black/45 backdrop-blur-md rounded-xl py-2.5 px-4 border border-white/5 z-10 max-w-md mx-auto">
-        <Mic className="h-4 w-4 text-white/40 shrink-0" />
-        <div className="flex items-center gap-0.5 flex-1">
-          {Array.from({ length: 18 }).map((_, i) => (
-            <span
-              key={i}
-              className="h-2.5 w-1 rounded-full transition-all duration-200"
-              style={{
-                backgroundColor: i < volLevel ? "#ff007f" : "rgba(255, 255, 255, 0.08)",
-                opacity: i < volLevel ? 0.95 : 1,
-                boxShadow: i < volLevel ? "0 0 8px #ff007fbb" : "none"
-              }}
-            />
-          ))}
-        </div>
-        <Volume2 className="h-4 w-4 text-white/40 shrink-0" />
-      </div>
+      )}
     </div>
   );
 }
-

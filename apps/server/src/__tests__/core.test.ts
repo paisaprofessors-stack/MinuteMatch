@@ -52,6 +52,21 @@ describe("matcher", () => {
     expect(match?.userId).toBe("c");
   });
 
+  it("relaxes interest requirements if either user has been waiting for at least WAIT_RELAX_MS", () => {
+    // Seeker recently joined, candidate recently joined, no shared interests -> no match
+    const seeker = queueUser("a", { interests: ["Coding"], joinedAt: now });
+    const freshCandidate = queueUser("b", { interests: ["Music"], joinedAt: now });
+    expect(findBestMatch(seeker, [freshCandidate], new Set(), now)).toBeNull();
+
+    // Seeker recently joined, candidate has been waiting 40s, no shared interests -> matches candidate
+    const waitingCandidate = queueUser("c", { interests: ["Music"], joinedAt: now - 40000 });
+    expect(findBestMatch(seeker, [waitingCandidate], new Set(), now)?.userId).toBe("c");
+
+    // Seeker has been waiting 40s, candidate recently joined, no shared interests -> matches candidate
+    const waitingSeeker = queueUser("d", { interests: ["Coding"], joinedAt: now - 40000 });
+    expect(findBestMatch(waitingSeeker, [freshCandidate], new Set(), now)?.userId).toBe("b");
+  });
+
   it("never matches blocked users even after waiting", () => {
     const seeker = queueUser("a");
     const blocked = queueUser("b", { interests: ["Music"], joinedAt: now - 120000 });

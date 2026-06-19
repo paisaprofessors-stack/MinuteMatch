@@ -30,7 +30,7 @@ export function ControlDock({
   activeIAmLabel
 }: ControlDockProps) {
   return (
-    <div className="w-full h-full p-4 flex items-center justify-center border-b md:border-b-0 md:border-r border-black/[0.06] bg-[#f4f4f7]">
+    <div className="w-full h-full p-4 flex items-center justify-center bg-transparent">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-xl md:max-w-none">
         <ControlButton
           variant="start"
@@ -48,7 +48,7 @@ export function ControlDock({
         />
         <ControlButton
           variant="filter"
-          icon={<Smile className="h-5 w-5 text-neutral-500" />}
+          icon={<Smile className="h-5 w-5 text-neonBlue" />}
           label="Interest"
           sublabel={activeInterestLabel}
           onClick={onInterest}
@@ -56,7 +56,7 @@ export function ControlDock({
         />
         <ControlButton
           variant="filter"
-          icon={<User className="h-5 w-5 text-neutral-500" />}
+          icon={<User className="h-5 w-5 text-neonPink" />}
           label="I Am"
           sublabel={activeIAmLabel}
           onClick={onIAm}

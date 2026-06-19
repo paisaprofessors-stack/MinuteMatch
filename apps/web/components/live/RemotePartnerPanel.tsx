@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { Flag, Ban, Smile, Sparkles, X } from "lucide-react";
+import { Flag, Ban, Smile, Sparkles, X, Heart, ShieldAlert } from "lucide-react";
 import { Button, GhostButton } from "@/components/ui";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { MeeMascot } from "@/components/MeeMascot";
 
 export type PartnerScreenState =
   | "idle"
@@ -63,157 +64,173 @@ export function RemotePartnerPanel({
   }, [stream]);
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center bg-black overflow-hidden">
-      {/* HTML structure hook for attaching remote WebRTC video stream */}
+    <div className="relative flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[#0a0b12] to-[#030307] overflow-hidden rounded-2xl border border-white/5 shadow-inner">
+      {/* Background ambient lighting for empty states */}
+      {["idle", "searching", "matched", "partnerLeft", "reported", "blocked"].includes(currentState) && (
+        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+          <div className="morphic-orb w-64 h-64 bg-gradient-to-tr from-neonBlue/10 to-neonPink/10 blur-2xl opacity-75" />
+          <div className="absolute w-80 h-80 ambient-glow opacity-25" />
+        </div>
+      )}
+
+      {/* HTML structure for Remote Peer WebRTC stream */}
       <div className="absolute inset-0 z-0 bg-transparent flex items-center justify-center">
         <video
           ref={videoRef}
           id="remoteVideo"
           autoPlay
           playsInline
-          className={`absolute inset-0 h-full w-full object-cover ${
-            stream && (currentState === "inSession" || currentState === "timerEnded") ? "" : "hidden"
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
+            stream && (currentState === "inSession" || currentState === "timerEnded") ? "opacity-100" : "opacity-0"
           }`}
         />
+        {/* Stream Scanlines overlay */}
+        {stream && (currentState === "inSession" || currentState === "timerEnded") && (
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_50%,rgba(0,0,0,0.15)_50%)] bg-[length:100%_4px] opacity-25 z-10" />
+        )}
       </div>
 
-      {/* State views */}
+      {/* Idle State */}
       {currentState === "idle" && (
-        <div className="text-center p-6 space-y-3 select-none z-10">
-          <div className="h-12 w-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto text-white/40 mb-3 shadow-inner">
-            <Smile className="h-6 w-6" />
+        <div className="relative z-10 glass-panel p-8 rounded-3xl max-w-sm w-[90%] text-center border border-white/10 shadow-glow transition-all duration-300 hover:scale-[1.01]">
+          <div className="mb-4 flex justify-center">
+            <MeeMascot state="idle" size={100} />
           </div>
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">Press Start Match to begin.</h2>
-          <p className="text-xs text-white/40 max-w-xs leading-relaxed lowercase tracking-widest">
-            Find people with your interests from around the world
+          <h2 className="text-xl font-black text-white uppercase tracking-wide">Start Discovery</h2>
+          <p className="text-xs text-white/50 mt-2 leading-relaxed lowercase tracking-wider">
+            Ready to find people matching your interests from around the world? Tap Start Match below.
           </p>
         </div>
       )}
 
+      {/* Searching State */}
       {currentState === "searching" && (
-        <div className="z-10">
+        <div className="relative z-10">
           <LoadingSpinner message={statusText} />
         </div>
       )}
 
+      {/* Connection Established State */}
       {currentState === "matched" && (
-        <div className="text-center p-6 space-y-4 z-10 animate-pulse">
-          <Sparkles className="h-10 w-10 text-neonPink animate-bounce mx-auto" />
-          <h2 className="text-2xl font-black text-white tracking-wide">Connection Established!</h2>
-          <p className="text-xs text-[#4ea8ff] uppercase tracking-widest font-black text-white/45">
-            Initialising secure session...
+        <div className="relative z-10 glass-panel p-8 rounded-3xl max-w-sm w-[90%] text-center border border-white/10 shadow-glowPink text-center space-y-4">
+          <div className="mb-2 flex justify-center">
+            <MeeMascot state="success" size={105} />
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-wide animate-pulse">Vibe Matched!</h2>
+          <p className="text-[10px] text-neonPink uppercase tracking-[0.25em] font-black">
+            Configuring connection stage...
           </p>
         </div>
       )}
 
+      {/* In Session State Overlay Controls */}
       {(currentState === "inSession" || currentState === "timerEnded") && partner && (
-        <div className="flex flex-col items-center justify-center text-center p-6 select-none space-y-5 z-10 w-full max-w-md">
-          <span className="text-[10px] font-black tracking-widest text-neonPink bg-neonPink/10 border border-neonPink/25 rounded-full px-3.5 py-1 uppercase shadow-sm">
-            Interaction Active
-          </span>
-          
-          <div className="space-y-1">
-            <h2 className="text-3xl font-black text-white drop-shadow-md">{partner.displayName}</h2>
-            <p className="text-[11px] text-white/50 uppercase tracking-widest font-bold">
-              Language: {partner.language} · Mode: {partner.mode}
-            </p>
-          </div>
-
-          {/* Shared interest and icebreaker badge */}
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4.5 w-full max-w-sm backdrop-blur-md shadow-lg">
-            <p className="text-[10px] font-black text-neonBlue uppercase tracking-widest">Shared Interest</p>
-            <p className="text-base font-black mt-1 text-white">{sharedInterest ?? "General Chat"}</p>
+        <>
+          {/* Top Floating Glass Info Banner (Shared Topic) */}
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[90%] max-w-xs bg-black/60 border border-white/10 rounded-2xl p-3 backdrop-blur-md shadow-lg z-20 text-center select-none">
+            <span className="text-[8px] font-black uppercase text-neonBlue tracking-widest">Shared Vibe</span>
+            <h3 className="text-sm font-black text-white truncate mt-0.5">{sharedInterest ?? "General Chat"}</h3>
             {icebreaker && (
-              <p className="text-xs text-white/50 mt-2.5 italic leading-relaxed">
+              <p className="text-[10px] text-white/60 italic leading-relaxed mt-1">
                 "{icebreaker}"
               </p>
             )}
           </div>
 
-          {/* Partner tags list */}
-          <div className="flex gap-1.5 flex-wrap justify-center max-w-xs">
-            {partner.interests.map((interest) => (
-              <span
-                key={interest}
-                className="rounded-full bg-white/[0.04] border border-white/5 px-2.5 py-0.5 text-[10px] font-bold text-white/60 uppercase tracking-wide"
-              >
-                {interest}
+          {/* Bottom Left Glass Profile Tag HUD Overlay */}
+          <div className="absolute bottom-4 left-4 z-20 flex flex-col gap-1 select-none">
+            <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm border border-white/5 px-2.5 py-1 rounded-full w-fit">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#ff007f] animate-ping" />
+              <span className="text-[9px] font-black uppercase text-white tracking-widest">
+                {partner.displayName}
               </span>
-            ))}
+            </div>
+            <div className="flex flex-wrap gap-1 max-w-xs mt-1">
+              {partner.interests.slice(0, 3).map((interest) => (
+                <span
+                  key={interest}
+                  className="rounded-full bg-black/40 backdrop-blur-sm border border-white/5 px-2 py-0.5 text-[8px] font-semibold text-white/70 uppercase tracking-wider"
+                >
+                  #{interest.toLowerCase()}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
+      {/* Partner Left State */}
       {currentState === "partnerLeft" && (
-        <div className="text-center p-6 space-y-4 z-10">
-          <div className="h-12 w-12 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto text-rose-400 mb-2">
-            <X className="h-6 w-6" />
+        <div className="relative z-10 glass-panel p-8 rounded-3xl max-w-sm w-[90%] text-center border border-white/10 shadow-lg space-y-4">
+          <div className="mb-2 flex justify-center">
+            <MeeMascot state="sad" size={90} />
           </div>
-          <h2 className="text-xl font-black text-white">Partner Left</h2>
-          <p className="text-xs text-white/45 max-w-xs leading-relaxed">
-            The session was terminated because your partner disconnected from the server.
+          <h2 className="text-lg font-black text-white">Partner Left Vibe</h2>
+          <p className="text-xs text-white/50 leading-relaxed max-w-xs">
+            Your partner has disconnected. Ready to start a new match?
           </p>
           <div className="flex gap-2.5 justify-center pt-2">
             <Button onClick={onFindNext} className="text-xs px-5 bg-gradient-to-r from-neonBlue to-neonPink text-white hover:brightness-105">
-              Find Next
+              Match Next
             </Button>
-            <GhostButton onClick={onBack} className="text-xs border-white/10">
+            <GhostButton onClick={onBack} className="text-xs border-white/10 bg-white/5">
               Go Back
             </GhostButton>
           </div>
         </div>
       )}
 
+      {/* Reported Notification Screen */}
       {currentState === "reported" && (
-        <div className="text-center p-6 space-y-4 z-10">
-          <div className="h-12 w-12 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center mx-auto text-amber-400 mb-2">
-            <Flag className="h-6 w-6" />
+        <div className="relative z-10 glass-panel p-8 rounded-3xl max-w-sm w-[90%] text-center border border-[#eab308]/20 shadow-lg space-y-4">
+          <div className="h-12 w-12 bg-yellow-500/10 border border-yellow-500/20 rounded-full flex items-center justify-center mx-auto text-yellow-400 mb-2">
+            <ShieldAlert className="h-6 w-6" />
           </div>
-          <h2 className="text-xl font-black text-white">Report Logged</h2>
-          <p className="text-xs text-white/45 max-w-xs leading-relaxed">
-            Report has been successfully logged. Thank you for making MinuteMatch safe.
+          <h2 className="text-lg font-black text-white">Safety Report Logged</h2>
+          <p className="text-xs text-white/50 leading-relaxed">
+            Report has been received. Thank you for keeping the community safe and clean.
           </p>
-          <Button onClick={onBack} className="text-xs px-6 mt-2 bg-white text-black hover:bg-neutral-100">
+          <Button onClick={onBack} className="text-xs px-6 mt-2 bg-white text-black hover:bg-neutral-100 w-full rounded-xl">
             Return to Desk
           </Button>
         </div>
       )}
 
+      {/* Blocked Notification Screen */}
       {currentState === "blocked" && (
-        <div className="text-center p-6 space-y-4 z-10">
-          <div className="h-12 w-12 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mx-auto text-rose-400 mb-2">
-            <Ban className="h-6 w-6" />
+        <div className="relative z-10 glass-panel p-8 rounded-3xl max-w-sm w-[90%] text-center border border-rose-500/20 shadow-lg space-y-4">
+          <div className="mb-2 flex justify-center">
+            <MeeMascot state="sad" size={90} />
           </div>
-          <h2 className="text-xl font-black text-white">User Blocked</h2>
-          <p className="text-xs text-white/45 max-w-xs leading-relaxed">
-            You will not be matched with this person again. Returning to main controls.
+          <h2 className="text-lg font-black text-white">User Blocked</h2>
+          <p className="text-xs text-white/50 leading-relaxed">
+            You will no longer be paired with this user. Back to matching controls.
           </p>
-          <Button onClick={onBack} className="text-xs px-6 mt-2 bg-white text-black hover:bg-neutral-100">
+          <Button onClick={onBack} className="text-xs px-6 mt-2 bg-white text-black hover:bg-neutral-100 w-full rounded-xl">
             Return
           </Button>
         </div>
       )}
 
-      {/* Floating session action overlay (Report, Block) */}
+      {/* Floating Action Menu (Report, Block buttons over session streams) */}
       {currentState === "inSession" && partner && (
-        <div className="absolute top-5 left-5 z-20 flex gap-2">
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
           <button
             type="button"
             onClick={onReportClick}
-            className="flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/10 text-white/70 hover:text-rose-400 hover:border-rose-400/35 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition cursor-pointer select-none"
+            className="flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/5 text-white/70 hover:text-rose-400 hover:border-rose-500/30 px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider uppercase transition cursor-pointer select-none"
           >
-            <Flag className="h-3.5 w-3.5" /> Report
+            <Flag className="h-3 w-3" /> Report
           </button>
           <button
             type="button"
             onClick={onBlockClick}
-            className="flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/10 text-white/70 hover:text-rose-400 hover:border-rose-400/35 px-2.5 py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition cursor-pointer select-none"
+            className="flex items-center gap-1 bg-black/45 backdrop-blur-md border border-white/5 text-white/70 hover:text-rose-400 hover:border-rose-500/30 px-2 py-1 rounded-lg text-[9px] font-bold tracking-wider uppercase transition cursor-pointer select-none"
           >
-            <Ban className="h-3.5 w-3.5" /> Block
+            <Ban className="h-3 w-3" /> Block
           </button>
         </div>
       )}
     </div>
   );
 }
-

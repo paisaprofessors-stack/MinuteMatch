@@ -23,10 +23,12 @@ export function canMatch(a: QueueUser, b: QueueUser, blocks: Set<string>): boole
 }
 
 export function findBestMatch(seeker: QueueUser, candidates: QueueUser[], blocks: Set<string>, now = Date.now()): QueueUser | null {
-  const relaxed = now - seeker.joinedAt >= WAIT_RELAX_MS;
+  const seekerRelaxed = now - seeker.joinedAt >= WAIT_RELAX_MS;
   const viable = candidates.filter((candidate) => canMatch(seeker, candidate, blocks));
   const scored = viable
     .map((candidate) => {
+      const candidateRelaxed = now - candidate.joinedAt >= WAIT_RELAX_MS;
+      const relaxed = seekerRelaxed || candidateRelaxed;
       const shared = sharedInterests(seeker, candidate).length;
       if (!relaxed && shared === 0) return null;
       return {
