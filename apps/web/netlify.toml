@@ -1,0 +1,3 @@
+[build]
+  command = "cd ../.. && npm run build:web"
+  publish = ".next"
