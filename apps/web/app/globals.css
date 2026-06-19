@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #050507;
+  --surface: #111116;
+  --surface-2: #17171f;
+  --border: rgba(255, 255, 255, 0.08);
+  --foreground: #ffffff;
+  --muted: #a1a1aa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+  background: #030303;
+  color: var(--foreground);
+  font-family: var(--font-sans), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display), "Outfit", sans-serif;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: rgba(255, 79, 216, 0.35);
+}
+
+.glass {
+  background: linear-gradient(145deg, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.32);
+  backdrop-filter: blur(20px);
+}
+
+.accent-text {
+  background: linear-gradient(100deg, #ffffff, #9ff84d 35%, #ff6f9f 62%, #56b7ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.arcade-bg {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(86, 183, 255, 0.16), transparent 25rem),
+    radial-gradient(circle at 88% 16%, rgba(255, 111, 159, 0.14), transparent 24rem),
+    linear-gradient(180deg, #050506 0%, #08090b 52%, #050506 100%);
+}
+
+.arcade-panel {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.026)),
+    linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+  border: 1px solid rgba(255,255,255,0.105);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(18px);
+}
+
+.scanline {
+  background:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,0.78) 48%, transparent 100%);
+}
+
+.scanner-beam {
+  background: linear-gradient(180deg, rgba(159,248,77,0), rgba(159,248,77,0.12), rgba(159,248,77,0));
+  animation: scanner-sweep 1.6s linear infinite;
+}
+
+.confetti-burst {
+  background:
+    radial-gradient(circle at 22% 20%, rgba(159,248,77,0.55) 0 3px, transparent 4px),
+    radial-gradient(circle at 44% 35%, rgba(86,183,255,0.5) 0 3px, transparent 4px),
+    radial-gradient(circle at 65% 18%, rgba(255,111,159,0.5) 0 3px, transparent 4px),
+    radial-gradient(circle at 80% 45%, rgba(255,207,114,0.5) 0 3px, transparent 4px);
+  animation: confetti-drop 700ms ease-out both;
+}
+
+.quiet-grid {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+@keyframes soft-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.16);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(251, 191, 36, 0);
+  }
+}
+
+@keyframes scanner-sweep {
+  from {
+    transform: translateY(-70%);
+  }
+  to {
+    transform: translateY(210%);
+  }
+}
+
+@keyframes confetti-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.95);
+  }
+  35% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+    transform: translateY(22px) scale(1);
+  }
+}
+
+.soft-in {
+  animation: soft-in 220ms ease-out both;
+}

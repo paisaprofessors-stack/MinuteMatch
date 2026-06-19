@@ -1,0 +1,23 @@
+{
+  "name": "minute-match",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w @minutematch/server\" \"npm run dev -w @minutematch/web\"",
+    "dev:web": "npm run dev -w @minutematch/web",
+    "dev:server": "npm run dev -w @minutematch/server",
+    "build": "npm run build -w @minutematch/shared && npm run build -w @minutematch/server && npm run build -w @minutematch/web",
+    "build:web": "npm run build -w @minutematch/shared && npm run build -w @minutematch/web",
+    "build:server": "npm run build -w @minutematch/shared && npm run build -w @minutematch/server",
+    "start:server": "npm run start -w @minutematch/server",
+    "test": "npm run test -w @minutematch/server",
+    "typecheck": "npm run build -w @minutematch/shared && npm run typecheck -w @minutematch/server && npm run typecheck -w @minutematch/web"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
