@@ -23,7 +23,7 @@ export function VideoStage({
       </div>
 
       {/* Floating Local preview webcam container (PiP) */}
-      <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-20 w-28 h-36 sm:w-36 sm:h-48 md:w-40 md:h-52 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-300 hover:scale-[1.03]">
+      <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6 z-20 w-32 h-44 sm:w-44 sm:h-60 md:w-52 md:h-72 rounded-2xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:border-white/20">
         {localPanel}
       </div>
 
